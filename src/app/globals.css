@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background: linear-gradient(135deg, #E0F2FE, #FEF9C3);
+  color: #0F172A;
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+/* Subtle golf ball texture pattern (light, minimal) */
+.bg-golf-texture {
+  background-image: radial-gradient(rgba(134, 239, 172, 0.15) 2px, transparent 2px);
+  background-size: 24px 24px;
+}
+
+/* Base custom styles */
+.glass-card {
+  @apply bg-white/95 backdrop-blur-md rounded-2xl shadow-md border border-green-100;
+}
