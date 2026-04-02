@@ -6,13 +6,17 @@ import Link from 'next/link'
 import { getSubscriptionHistory } from '@/lib/subscription'
 import { getSession } from '@/lib/auth'
 import { motion } from 'framer-motion'
+import { EmailVerificationModal } from '@/components/auth/EmailVerificationModal'
+import { useToast } from '@/hooks/useToast'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showVerification, setShowVerification] = useState(false)
   const router = useRouter()
+  const { showToast } = useToast()
 
   useEffect(() => {
     let active = true
@@ -35,6 +39,13 @@ export default function LoginPage() {
     })
 
     if (signInError) {
+      // Check if it's an email not confirmed error
+      if (signInError.message?.toLowerCase().includes('email not confirmed')) {
+        setShowVerification(true)
+        showToast({ type: 'info', message: '⚠️ Please verify your email before continuing' })
+        setLoading(false)
+        return
+      }
       setError('Invalid login credentials. Please try again.')
       setLoading(false)
       return
@@ -42,6 +53,14 @@ export default function LoginPage() {
 
     if (!userRecord || !userRecord.user) {
       setError('An unexpected error occurred.')
+      setLoading(false)
+      return
+    }
+
+    // Check if email is confirmed
+    if (!userRecord.user.email_confirmed_at) {
+      setShowVerification(true)
+      showToast({ type: 'info', message: '⚠️ Please verify your email before continuing' })
       setLoading(false)
       return
     }
@@ -64,6 +83,12 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen p-6 flex flex-col items-center justify-center bg-golf-texture relative">
+      <EmailVerificationModal
+        isOpen={showVerification}
+        email={email}
+        onClose={() => setShowVerification(false)}
+      />
+
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

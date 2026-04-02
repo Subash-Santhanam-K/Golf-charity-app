@@ -5,14 +5,17 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getSession } from '@/lib/auth'
 import { motion } from 'framer-motion'
+import { EmailVerificationModal } from '@/components/auth/EmailVerificationModal'
+import { useToast } from '@/hooks/useToast'
 
 export default function SignupPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const [msg, setMsg] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showVerification, setShowVerification] = useState(false)
   const router = useRouter()
+  const { showToast } = useToast()
 
   useEffect(() => {
     let active = true
@@ -27,7 +30,6 @@ export default function SignupPage() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    setMsg('')
     setLoading(true)
 
     const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -37,6 +39,7 @@ export default function SignupPage() {
 
     if (authError || !authData.user) {
       setError(authError?.message || 'Error creating your profile.')
+      showToast({ type: 'error', message: authError?.message || 'Signup failed. Please try again 😅' })
       setLoading(false)
       return
     }
@@ -51,15 +54,25 @@ export default function SignupPage() {
       return
     }
 
-    setMsg('Welcome to the club! You can now tee off. 🌟')
     setLoading(false)
-    setTimeout(() => {
-       router.push('/login')
-    }, 2500)
+    setShowVerification(true)
+  }
+
+  const handleChangeEmail = () => {
+    setShowVerification(false)
+    setEmail('')
+    setPassword('')
   }
 
   return (
     <div className="min-h-screen p-6 flex flex-col items-center justify-center bg-golf-texture relative">
+      <EmailVerificationModal
+        isOpen={showVerification}
+        email={email}
+        onClose={() => setShowVerification(false)}
+        onChangeEmail={handleChangeEmail}
+      />
+
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -74,7 +87,6 @@ export default function SignupPage() {
           </div>
           
           {error && <motion.div initial={{opacity:0}} animate={{opacity:1}} className="p-3 bg-red-50 text-red-700 rounded-xl text-sm font-medium border border-red-100">{error}</motion.div>}
-          {msg && <motion.div initial={{opacity:0}} animate={{opacity:1}} className="p-3 bg-green-50 text-green-700 rounded-xl text-sm font-bold border border-green-200">{msg}</motion.div>}
           
           <form onSubmit={handleSignup} className="space-y-4">
             <div className="space-y-1">
